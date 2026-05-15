@@ -1,0 +1,592 @@
+К сожалению, я не могу сгенерировать реальную работающую ссылку в интернете (например, «мой-сайт.часы»), так как моя задача — создавать код, а не хостить сайты. Но я могу дать вам **готовый код**, который вы сами сможете загрузить на любой бесплатный хостинг (например, GitHub Pages, Netlify, Vercel) и получить ссылку с любым словом, включая «часы».
+
+Однако я **изменил код** по вашему запросу:
+1. **Объединил палитры** — теперь цвета для цифр и фона берутся из одного общего набора (40+ оттенков), но вы можете выбирать их отдельно для цифр и фона.
+2. **Добавил больше цветов** (40+ стильных оттенков: основные, пастельные, яркие, тёмные).
+3. Убрал все локальные привязки — код полностью готов для публичного доступа.
+
+Ниже представлен **финальный HTML-код**. Скопируйте его в файл `index.html` и загрузите на любой хостинг. После загрузки у вас будет ссылка, которую вы можете назвать как угодно (например, `https://ваш-логин.github.io/chasy` или `мой-сайт-часы.netlify.app`).
+
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Цифровые часы | Настройка цвета и пояса</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Segoe UI', 'Inter', 'Poppins', system-ui, -apple-system, 'Roboto', sans-serif;
+        }
+
+        /* полноэкранные часы */
+        .fullscreen-clock {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #ffffff;
+            transition: background-color 0.2s ease;
+            z-index: 1;
+        }
+
+        .clock-digits {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: baseline;
+            gap: 2rem;
+            flex-wrap: wrap;
+            padding: 2rem;
+            font-weight: 700;
+            text-shadow: 0 8px 20px rgba(0,0,0,0.05);
+        }
+
+        .time-unit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: 'Fira Mono', 'JetBrains Mono', monospace;
+        }
+
+        .number {
+            font-size: clamp(4rem, 18vw, 14rem);
+            line-height: 1;
+            letter-spacing: 4px;
+            font-weight: 800;
+            transition: color 0.15s ease;
+        }
+
+        .label {
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-top: 0.75rem;
+            opacity: 0.65;
+            font-weight: 500;
+            transition: color 0.15s ease;
+        }
+
+        .separator {
+            font-size: clamp(3rem, 12vw, 10rem);
+            font-weight: 800;
+            align-self: center;
+            line-height: 1;
+            transition: color 0.15s ease;
+            margin: 0 0.2rem;
+        }
+
+        /* кнопка настроек — чёрная */
+        .settings-btn {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            z-index: 100;
+            background-color: #000000;
+            border: none;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 12px 20px;
+            border-radius: 48px;
+            cursor: pointer;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.2);
+            transition: 0.2s;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .settings-btn:hover {
+            background-color: #222;
+            transform: scale(1.02);
+        }
+
+        /* модальное окно */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0.2s, opacity 0.2s;
+        }
+
+        .modal.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: white;
+            max-width: 90vw;
+            width: 600px;
+            max-height: 85vh;
+            border-radius: 40px;
+            padding: 28px 24px 32px;
+            overflow-y: auto;
+            font-family: inherit;
+        }
+
+        .modal-content h3 {
+            font-size: 1.7rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .modal-content h4 {
+            font-size: 1.2rem;
+            margin: 1.2rem 0 0.8rem 0;
+            font-weight: 600;
+            border-left: 4px solid black;
+            padding-left: 12px;
+        }
+
+        /* сетка цветов (одинаковая для цифр и фона, но выбор независимый) */
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(55px, 70px));
+            gap: 12px;
+            justify-content: center;
+            margin: 15px 0 5px;
+        }
+
+        .color-swatch {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: 2px solid rgba(0,0,0,0.1);
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.08);
+            border-color: black;
+        }
+
+        .active-swatch-indicator {
+            outline: 3px solid black;
+            outline-offset: 2px;
+            border-radius: 22px;
+        }
+
+        .black-btn {
+            background-color: #000000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 100%;
+            text-align: center;
+        }
+
+        .black-btn:hover {
+            background-color: #2c2c2c;
+            transform: translateY(-2px);
+        }
+
+        .timezone-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
+
+        .tz-option {
+            background-color: #f0f2f5;
+            padding: 12px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: 0.15s;
+            border: 1px solid #e2e6ea;
+        }
+
+        .tz-option:hover {
+            background-color: #e0e4e9;
+            transform: translateX(4px);
+        }
+
+        .tz-option.selected-tz {
+            background-color: #000000;
+            color: white;
+            border-color: black;
+        }
+
+        .flex-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .flex-buttons .black-btn {
+            margin-top: 0;
+        }
+
+        .toast-msg {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: black;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            z-index: 150;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 650px) {
+            .clock-digits { gap: 0.8rem; }
+            .separator { margin: 0; }
+            .settings-btn { top: 16px; left: 16px; padding: 8px 16px; font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="fullscreen-clock" id="clockContainer">
+    <div class="clock-digits">
+        <div class="time-unit">
+            <div class="number" id="hoursNum">--</div>
+            <div class="label">ЧАСЫ</div>
+        </div>
+        <div class="separator">:</div>
+        <div class="time-unit">
+            <div class="number" id="minutesNum">--</div>
+            <div class="label">МИНУТЫ</div>
+        </div>
+        <div class="separator">:</div>
+        <div class="time-unit">
+            <div class="number" id="secondsNum">--</div>
+            <div class="label">СЕКУНДЫ</div>
+        </div>
+    </div>
+</div>
+
+<button class="settings-btn" id="openSettingsBtn">⚙️ НАСТРОЙКИ</button>
+
+<div class="modal" id="settingsModal">
+    <div class="modal-content">
+        <h3>⚙️ Настройки</h3>
+        <h4>🌍 Часовой пояс</h4>
+        <div class="timezone-selector" id="timezoneList"></div>
+        
+        <h4>🎨 Цвет ЦИФР</h4>
+        <div class="color-grid" id="digitColorGrid"></div>
+        
+        <h4>🖌️ Цвет ФОНА</h4>
+        <div class="color-grid" id="bgColorGrid"></div>
+        
+        <div class="flex-buttons">
+            <button class="black-btn" id="cancelSettingsBtn">Отмена</button>
+            <button class="black-btn" id="applySettingsBtn">✅ ГОТОВО</button>
+        </div>
+    </div>
+</div>
+
+<div id="toastMsg" class="toast-msg">⚡ Настройки сохранены</div>
+
+<script>
+    // ======================= ОБЩАЯ ПАЛИТРА (40+ ЦВЕТОВ) =======================
+    const universalPalette = [
+        "#000000", "#1A1A1A", "#333333", "#4D4D4D", // чёрные и серые
+        "#FF0000", "#E63946", "#FF6B6B", "#FF8C42", // красные/оранжевые
+        "#FFD166", "#F4A261", "#E9C46A", "#F9C74F", // жёлтые/золотые
+        "#2A9D8F", "#2B9348", "#55A630", "#80ED99", // зелёные
+        "#0077B6", "#00B4D8", "#48CAE4", "#90E0EF", // голубые/синие
+        "#3A0CA3", "#7209B7", "#B5179E", "#F72585", // фиолетовые/розовые
+        "#6D597A", "#B56576", "#E56B6F", "#EAAC8B", // приглушённые тона
+        "#F8EDEB", "#FCD5CE", "#FEC89A", "#FFF3B0", // светлые пастельные
+        "#D8E2DC", "#9CADCE", "#7B6C8C", "#E2C6D6",  // нежные пыльные оттенки
+        "#A7C7E7", "#B5EAD7", "#C7CEE6", "#FFB7B2", // свежие акценты
+        "#5D576B", "#F4F1DE", "#E07A5F", "#81B29A"   // природные оттенки
+    ];
+    
+    // Список часовых поясов
+    const timezones = [
+        "UTC", "Europe/London", "Europe/Moscow", "Europe/Berlin", "Europe/Paris",
+        "America/New_York", "America/Los_Angeles", "America/Chicago", "America/Toronto",
+        "Asia/Tokyo", "Asia/Shanghai", "Asia/Dubai", "Asia/Kolkata", "Asia/Seoul",
+        "Australia/Sydney", "Pacific/Auckland", "America/Sao_Paulo", "Africa/Johannesburg"
+    ];
+    
+    // Текущие настройки
+    let currentSettings = {
+        timezone: "Europe/Moscow",
+        digitColor: "#000000",
+        bgColor: "#FFFFFF"
+    };
+    
+    let isFirstVisit = true;
+    let tempTimezone = currentSettings.timezone;
+    let tempDigitColor = currentSettings.digitColor;
+    let tempBgColor = currentSettings.bgColor;
+    
+    // DOM элементы
+    const clockContainer = document.querySelector(".fullscreen-clock");
+    const hoursSpan = document.getElementById("hoursNum");
+    const minutesSpan = document.getElementById("minutesNum");
+    const secondsSpan = document.getElementById("secondsNum");
+    const separators = document.querySelectorAll(".separator");
+    const labels = document.querySelectorAll(".label");
+    const openBtn = document.getElementById("openSettingsBtn");
+    const modal = document.getElementById("settingsModal");
+    const cancelBtn = document.getElementById("cancelSettingsBtn");
+    const applyBtn = document.getElementById("applySettingsBtn");
+    const timezoneDiv = document.getElementById("timezoneList");
+    const digitGrid = document.getElementById("digitColorGrid");
+    const bgGrid = document.getElementById("bgColorGrid");
+    const toast = document.getElementById("toastMsg");
+    
+    // Получение времени
+    function getTimeInTimezone(tz) {
+        try {
+            const now = new Date();
+            const fmt = new Intl.DateTimeFormat('ru-RU', {
+                timeZone: tz,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+            const parts = fmt.formatToParts(now);
+            let hour = '', minute = '', second = '';
+            for (const p of parts) {
+                if (p.type === 'hour') hour = p.value;
+                if (p.type === 'minute') minute = p.value;
+                if (p.type === 'second') second = p.value;
+            }
+            return { hour, minute, second };
+        } catch(e) {
+            const d = new Date();
+            return {
+                hour: d.getHours().toString().padStart(2,'0'),
+                minute: d.getMinutes().toString().padStart(2,'0'),
+                second: d.getSeconds().toString().padStart(2,'0')
+            };
+        }
+    }
+    
+    function updateClock() {
+        const { hour, minute, second } = getTimeInTimezone(currentSettings.timezone);
+        hoursSpan.innerText = hour;
+        minutesSpan.innerText = minute;
+        secondsSpan.innerText = second;
+    }
+    
+    function applyColors() {
+        clockContainer.style.backgroundColor = currentSettings.bgColor;
+        [hoursSpan, minutesSpan, secondsSpan].forEach(el => el.style.color = currentSettings.digitColor);
+        separators.forEach(s => s.style.color = currentSettings.digitColor);
+        labels.forEach(l => l.style.color = currentSettings.digitColor);
+    }
+    
+    function refresh() {
+        updateClock();
+        applyColors();
+    }
+    
+    function showToastMessage(msg) {
+        toast.innerText = msg;
+        toast.style.opacity = "1";
+        setTimeout(() => toast.style.opacity = "0", 1800);
+    }
+    
+    function saveSettings() {
+        currentSettings.timezone = tempTimezone;
+        currentSettings.digitColor = tempDigitColor;
+        currentSettings.bgColor = tempBgColor;
+        localStorage.setItem("clockSettings", JSON.stringify(currentSettings));
+        refresh();
+        modal.classList.remove("active");
+        showToastMessage("✅ Настройки сохранены!");
+        isFirstVisit = false;
+    }
+    
+    function loadSaved() {
+        const saved = localStorage.getItem("clockSettings");
+        if (saved) {
+            try {
+                const p = JSON.parse(saved);
+                if (p.timezone && p.digitColor && p.bgColor) {
+                    currentSettings = p;
+                    isFirstVisit = false;
+                }
+            } catch(e) {}
+        }
+        tempTimezone = currentSettings.timezone;
+        tempDigitColor = currentSettings.digitColor;
+        tempBgColor = currentSettings.bgColor;
+        refresh();
+    }
+    
+    function rgbToHex(rgb) {
+        if (!rgb) return null;
+        const res = rgb.match(/\d+/g);
+        if (!res || res.length < 3) return null;
+        const r = parseInt(res[0]), g = parseInt(res[1]), b = parseInt(res[2]);
+        return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+    }
+    
+    function highlightSwatch(container, selectedColor) {
+        const swatches = container.querySelectorAll(".color-swatch");
+        swatches.forEach(sw => {
+            sw.classList.remove("active-swatch-indicator");
+            const bg = sw.style.backgroundColor;
+            let hex = bg.startsWith('#') ? bg.toUpperCase() : rgbToHex(bg);
+            if (hex === selectedColor.toUpperCase()) {
+                sw.classList.add("active-swatch-indicator");
+            }
+        });
+    }
+    
+    function buildColorGrids() {
+        // сетка для цифр
+        digitGrid.innerHTML = "";
+        universalPalette.forEach(color => {
+            const swatch = document.createElement("div");
+            swatch.className = "color-swatch";
+            swatch.style.backgroundColor = color;
+            if (tempDigitColor === color) swatch.classList.add("active-swatch-indicator");
+            swatch.addEventListener("click", () => {
+                tempDigitColor = color;
+                highlightSwatch(digitGrid, color);
+            });
+            digitGrid.appendChild(swatch);
+        });
+        
+        // сетка для фона (такая же палитра)
+        bgGrid.innerHTML = "";
+        universalPalette.forEach(color => {
+            const swatch = document.createElement("div");
+            swatch.className = "color-swatch";
+            swatch.style.backgroundColor = color;
+            if (tempBgColor === color) swatch.classList.add("active-swatch-indicator");
+            swatch.addEventListener("click", () => {
+                tempBgColor = color;
+                highlightSwatch(bgGrid, color);
+            });
+            bgGrid.appendChild(swatch);
+        });
+    }
+    
+    function buildTimezoneSelector() {
+        timezoneDiv.innerHTML = "";
+        timezones.forEach(tz => {
+            const el = document.createElement("div");
+            el.className = "tz-option";
+            if (tempTimezone === tz) el.classList.add("selected-tz");
+            el.innerText = tz.replace(/_/g, ' ').replace(/\//g, ' / ');
+            el.addEventListener("click", () => {
+                document.querySelectorAll(".tz-option").forEach(opt => opt.classList.remove("selected-tz"));
+                el.classList.add("selected-tz");
+                tempTimezone = tz;
+            });
+            timezoneDiv.appendChild(el);
+        });
+    }
+    
+    function syncModal() {
+        // синхронизация пояса
+        document.querySelectorAll(".tz-option").forEach(opt => {
+            opt.classList.remove("selected-tz");
+            let raw = opt.innerText.replace(' / ', '/').replace(/ /g, '_');
+            if (raw === tempTimezone || opt.innerText === tempTimezone.replace(/_/g, ' ')) {
+                opt.classList.add("selected-tz");
+            }
+        });
+        highlightSwatch(digitGrid, tempDigitColor);
+        highlightSwatch(bgGrid, tempBgColor);
+    }
+    
+    function openModal() {
+        tempTimezone = currentSettings.timezone;
+        tempDigitColor = currentSettings.digitColor;
+        tempBgColor = currentSettings.bgColor;
+        buildColorGrids();
+        buildTimezoneSelector();
+        syncModal();
+        modal.classList.add("active");
+    }
+    
+    function closeModal() {
+        modal.classList.remove("active");
+    }
+    
+    // Запуск часов
+    let interval;
+    function startClock() {
+        if (interval) clearInterval(interval);
+        interval = setInterval(() => updateClock(), 1000);
+    }
+    
+    function init() {
+        loadSaved();
+        startClock();
+        
+        openBtn.onclick = (e) => {
+            e.preventDefault();
+            openModal();
+        };
+        cancelBtn.onclick = (e) => {
+            e.preventDefault();
+            closeModal();
+        };
+        applyBtn.onclick = (e) => {
+            e.preventDefault();
+            saveSettings();
+        };
+        modal.onclick = (e) => {
+            if (e.target === modal) closeModal();
+        };
+        
+        if (isFirstVisit) {
+            setTimeout(() => {
+                openModal();
+                showToastMessage("✨ Выберите часовой пояс и цвета, затем нажмите ГОТОВО");
+            }, 300);
+        }
+    }
+    
+    init();
+</script>
+</body>
+</html>
+```
